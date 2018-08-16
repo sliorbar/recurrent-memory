@@ -169,7 +169,8 @@ def GRURecurrent(input_var, mask_var=None, batch_size=1, n_in=100, n_out=1, n_hi
                                                               W_hid=LeInit(diag_val=diag_val, offdiag_val=offdiag_val), 
                                                               W_cell=None, nonlinearity=lasagne.nonlinearities.rectify), 
                             hid_init = lasagne.init.Constant(0.), backwards=False, learn_init=False, 
-                            gradient_steps=-1, grad_clipping=10., unroll_scan=False, precompute_input=True, mask_input=l_mask, only_return_final=False)
+                            gradient_steps=-1, grad_clipping=10., unroll_scan=False, precompute_input=True, mask_input=l_mask)
+                            #gradient_steps=-1, grad_clipping=10., unroll_scan=False, precompute_input=True, mask_input=l_mask, only_return_final=False)
 
     # Output Layer
     l_shp        = ReshapeLayer(l_rec, (-1, n_hid))

@@ -16,11 +16,11 @@ r2b_means         = np.zeros(n_jobs)
 inflosses         = np.zeros(n_jobs)
 entrpy_means      = np.zeros(n_jobs)
 #infloss_threshold = 0.5       # only consider jobs with inf. loss below this
-infloss_threshold = .5       # only consider jobs with inf. loss below this
+infloss_threshold = 5       # only consider jobs with inf. loss below this
 entrpy_bins       = 20        # number of bins for computing entropy of peak resp. time distribution
 #window_size       = 5         # window around peak time to compute mean ridge activity
 window_size       = 6         # window around peak time to compute mean ridge activity
-r_threshold       = 5e-4      # only consider neurons with mean activity above this
+r_threshold       = 5e-5      # only consider neurons with mean activity above this
 
 # CD1: task 2
 # DE1: task 0
@@ -33,7 +33,7 @@ SI_job_vec = np.zeros(n_jobs)
 for j in range(n_jobs):
 
 #    filename = 'DATA/BASIC_COMP_data/500jobidx%i_model0_task8_everything.mat'%(j+1)
-    filename = '500_sigma0.000000_lambda0.980000_model0_task1_everything.mat'
+    filename = '500_sigma0.000000_lambda0.980000_model0_task0_everything.mat'
     if os.path.isfile(filename):
         data = loadmat(filename)
     else:

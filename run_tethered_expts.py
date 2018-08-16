@@ -60,8 +60,8 @@ if __name__ == "__main__":
                 "resp_dur": 25,
                 "kappa": 2.0,
                 "spon_rate": 0.1,
-                "tr_max_iter": 25001,
-                "test_max_iter": 2501}
+                "tr_max_iter": 250,
+                "test_max_iter": 50}
 
     # Build task generators
     generator, test_generator = build_generators(ExptDict)
@@ -103,13 +103,14 @@ if __name__ == "__main__":
         s_vec.append(s)
         opt_vec.append(opt)
         net_vec.append(np.squeeze(net[:,-10,:]))
-        if i % 500 == 0:
+        if i % 10 == 0:
             opt_vec = np.asarray(opt_vec)
             net_vec = np.asarray(net_vec)
             s_vec   = np.asarray(s_vec)
             infloss = build_performance(s_vec,opt_vec,net_vec,ExptDict)
             infloss_vec.append(infloss)
-            print 'Batch #%d; X-ent: %.6f; Inf. loss: %.6f' % (i, score, infloss)
+            #print 'Batch #%d; X-ent: %.6f; Inf. loss: %.6f' % (i, score, infloss)
+            print ('Batch {:n}; X-ent: {:f}; Inf. loss: {:f}'.format(i, score, infloss))
             s_vec   = []
             opt_vec = []
             net_vec = []
@@ -122,7 +123,7 @@ if __name__ == "__main__":
         s_vec.append(s)
         opt_vec.append(opt)
         net_vec.append(np.squeeze( net[:,-10,:] ))
-        if i % 500 == 0:
+        if i % 10 == 0:
             ex_hid_vec.append(example_hidden)
             ex_inp_vec.append(example_input)
 
@@ -130,8 +131,8 @@ if __name__ == "__main__":
     net_vec = np.asarray(net_vec)
     s_vec   = np.asarray(s_vec)
     infloss_test = build_performance(s_vec,opt_vec,net_vec,ExptDict)
-    print 'Test data; Inf. loss: %.6f' %infloss_test
-
+    #print 'Test data; Inf. loss: %.6f' %infloss_test
+    print ('Test data; Inf. loss: {:f}'.format(infloss_test))
     # Input and hidden layer activities
     ex_hid_vec = np.asarray(ex_hid_vec)
     ex_hid_vec = np.reshape(ex_hid_vec,(-1, generator.stim_dur + generator.delay_dur +

@@ -1097,3 +1097,91 @@ class VarGatedDelayedEstimationTask(Task):
         mu_aux[C1ind,0] = mu_x[C1ind,1]
         
         return delay_durs, example_input, example_output, example_mask, S, mu_aux
+
+class Julia2015(Task):
+    '''Parameters'''
+    def __init__(self, max_iter=None, batch_size=50, n_in=25, n_out=1, stim_dur=10, B_stim_dur=10, delay_dur=1000, resp_dur=10, sigtc=10.0, stim_rate=1.0, spon_rate=0.1, B_val = 2):
+        super(Julia2015, self).__init__(max_iter=max_iter, batch_size=batch_size)
+        self.n_in      = n_in                             
+        self.n_out     = n_out
+        self.tau       = 1.0 / sigtc**2
+        self.spon_rate = spon_rate
+        self.phi       = np.linspace(-40.0, 40.0, self.n_in) 
+        self.stim_dur  = stim_dur
+        self.delay_dur = delay_dur
+        self.resp_dur  = resp_dur
+        self.total_dur = 2*stim_dur + delay_dur + resp_dur
+        self.stim_rate = stim_rate
+        self.B_stim_dur = B_stim_dur
+        self.B_val = B_val
+        
+    def sample(self):                        
+        # Left-right choice         
+        #A = np.ones(self.stim_dur)
+        #A = np.random.randint(0, high=4, size=self.stim_dur)
+        A = [0.0,1.0,12.0,12.0,3.0,0.0,1.0,3.0,3.0,10.0]
+        if self.stim_rate != self.B_val:
+            B = np.ones(self.B_stim_dur) * self.B_val
+        else:
+            B = A[:]
+        Gap = np.zeros(self.resp_dur)
+       # Motif = np.append(A,Gap
+        Motif = np.append(A,np.append(Gap,np.append(B,Gap)))
+        Song_length = self.total_dur - self.stim_dur
+        Song = np.tile(Motif,int(np.floor((Song_length) / np.size(Motif))))
+        #if self.stim_rate != self.B_val:
+        #    Song_Reg = self.stim_rate * (Song == 1) + self.B_val * (Song == self.B_val) + self.spon_rate * (Song == 0)
+        #else:
+        #    Song_Reg = self.stim_rate * (Song == 1) + self.spon_rate * (Song == 0)        
+        Song_Reg = Song  + self.spon_rate * (Song == 0)
+        Song_Reg_Length = Song_Reg.size
+        
+        #C = np.random.randint(0, high=self.stim_dur, size=self.batch_size)
+        C=np.ones([self.batch_size,])
+        S = np.zeros((self.batch_size,self.total_dur))
+        Sin = np.zeros((self.batch_size,self.total_dur))
+        Sin [:] = self.spon_rate
+        #Sin[:,-1] = self.stim_rate
+        #Sin[:,-1] = self.stim_rate
+        for i in range(self.batch_size):
+            #S[i,C[i]:C[i]+Song_Reg_Length] = Song_Reg[:]
+            S[i,:Song_Reg_Length] = Song_Reg[:]
+            #Sin[i,C[i]] = self.stim_rate
+        #if self.stim_rate != self.B_val:
+        #    S = -15.0 * (Song==0.0) + 15.0 * (Song==self.stim_rate) + (15*self.B_val) * (Song == self.B_Val)
+        #else:
+        #    S = -15.0 * (Song==0.0) + 15.0 * (Song==self.stim_rate) 
+        #T1 = np.tile(S, (1,1,1))        
+        # Noisy responses
+        #Ls             = (self.stim_rate / self.stim_dur) * np.exp(-0.5 * self.tau * ( np.tile(np.swapaxes(T1, 0,2),(1, self.stim_dur, self.n_in)) - np.tile(self.phi,(self.batch_size,self.stim_dur,1) ) )**2 )
+        #Ld             = (self.spon_rate / self.delay_dur) * np.ones((self.batch_size, self.delay_dur, self.n_in)) 
+        #Lr             = (self.spon_rate / self.resp_dur) * np.ones((self.batch_size, self.resp_dur, self.n_in))
+        A1 = np.tile(np.swapaxes(Sin, 0,1),(self.n_in,1, 1 ))
+        #A2 = np.tile(self.phi,(self.batch_size,self.total_dur,1)  )
+        A1 = np.swapaxes(A1,0,2)
+        
+        #S = np.swapaxes(S,0,1)
+        #Lsong          = (self.stim_rate / Song_length) * np.exp(-0.5 * self.tau * ( np.tile(np.swapaxes(S, 0,1),(self.n_in,1, 1 )) - np.tile(self.phi,(self.batch_size,self.total_dur,1) ) )**2 )
+        #Lsong          = (self.stim_rate / Song_length) * np.exp(-0.5 * self.tau * ( A1 - A2 )**2 )
+        
+
+        #Rs             = np.random.poisson(Ls)
+        #Rd             = np.random.poisson(Ld)
+        #Rr             = np.random.poisson(Lr)
+        #Rsong             = np.random.poisson(Lsong)
+        #Rsong             = np.random.poisson(A1)
+
+
+        example_input  = A1
+        example_output = S
+        example_output = np.repeat(example_output[:,:,np.newaxis],1,axis=2)
+        # example_output[:,-5:,:] = 0.5
+        
+        #cum_Rs         = np.sum(Rsong,axis=1)
+        #prec           = np.sum(cum_Rs,axis=1) * self.tau
+        #mu             = self.tau * np.dot(cum_Rs,self.phi) / prec
+        #d              = 0.5 * prec * ( (-15.0 - mu)**2 - (15.0 - mu)**2 ) 
+        #P1             = 1.0 / (1.0 + np.exp(-d))
+
+        return example_input, example_output, C, S
+    

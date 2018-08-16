@@ -1,9 +1,7 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Thu Sep 14 10:44:56 2017 @author: emin 
+Created on Thu Jan 12 13:06:26 2017 @author: emin
 """
-import numpy as np
 import theano
 import theano.tensor as T
 from lasagne import init, nonlinearities
@@ -11,7 +9,7 @@ from lasagne.utils import unroll_scan
 from lasagne.layers import Layer, InputLayer, MergeLayer
 from lasagne.layers import helper
 
-class CustomRecurrentLayerWithFastWeights(MergeLayer):
+class ResidualCustomRecurrentLayer(MergeLayer):
     """ """
     def __init__(self, incoming, input_to_hidden, hidden_to_hidden,
                  nonlinearity=nonlinearities.rectify,
@@ -24,7 +22,8 @@ class CustomRecurrentLayerWithFastWeights(MergeLayer):
                  precompute_input=True,
                  mask_input=None,
                  only_return_final=False,
-                 gamma=0.9,
+                 leak_inp=1.0,
+                 leak_hid=1.0,
                  **kwargs):
 
         # This layer inherits from a MergeLayer, because it can have three
@@ -41,7 +40,7 @@ class CustomRecurrentLayerWithFastWeights(MergeLayer):
             incomings.append(hid_init)
             self.hid_init_incoming_index = len(incomings)-1
 
-        super(CustomRecurrentLayerWithFastWeights, self).__init__(incomings, **kwargs)
+        super(ResidualCustomRecurrentLayer, self).__init__(incomings, **kwargs)
 
         input_to_hidden_in_layers = \
             [layer for layer in helper.get_all_layers(input_to_hidden)
@@ -69,7 +68,8 @@ class CustomRecurrentLayerWithFastWeights(MergeLayer):
         self.unroll_scan = unroll_scan
         self.precompute_input = precompute_input
         self.only_return_final = only_return_final
-        self.gamma = gamma
+        self.leak_inp = leak_inp
+        self.leak_hid = leak_hid
 
         if unroll_scan and gradient_steps != -1:
             raise ValueError(
@@ -159,7 +159,7 @@ class CustomRecurrentLayerWithFastWeights(MergeLayer):
 
     def get_params(self, **tags):
         # Get all parameters from this layer, the master layer
-        params = super(CustomRecurrentLayerWithFastWeights, self).get_params(**tags)
+        params = super(ResidualCustomRecurrentLayer, self).get_params(**tags)
         # Combine with all parameters from the child layers
         params += helper.get_all_params(self.input_to_hidden, **tags)
         params += helper.get_all_params(self.hidden_to_hidden, **tags)
@@ -179,29 +179,7 @@ class CustomRecurrentLayerWithFastWeights(MergeLayer):
                     self.hidden_to_hidden.output_shape[1:])
 
     def get_output_for(self, inputs, **kwargs):
-        """
-        Compute this layer's output function given a symbolic input variable.
-        Parameters
-        ----------
-        inputs : list of theano.TensorType
-            `inputs[0]` should always be the symbolic input variable.  When
-            this layer has a mask input (i.e. was instantiated with
-            `mask_input != None`, indicating that the lengths of sequences in
-            each batch vary), `inputs` should have length 2, where `inputs[1]`
-            is the `mask`.  The `mask` should be supplied as a Theano variable
-            denoting whether each time step in each sequence in the batch is
-            part of the sequence or not.  `mask` should be a matrix of shape
-            ``(n_batch, n_time_steps)`` where ``mask[i, j] = 1`` when ``j <=
-            (length of sequence i)`` and ``mask[i, j] = 0`` when ``j > (length
-            of sequence i)``. When the hidden state of this layer is to be
-            pre-filled (i.e. was set to a :class:`Layer` instance) `inputs`
-            should have length at least 2, and `inputs[-1]` is the hidden state
-            to prefill with.
-        Returns
-        -------
-        layer_output : theano.TensorType
-            Symbolic output variable.
-        """
+        """ """
         # Retrieve the layer input
         input = inputs[0]
         # Retrieve the mask when it is supplied
@@ -227,7 +205,8 @@ class CustomRecurrentLayerWithFastWeights(MergeLayer):
             # input.shape[2:] was raising a Theano error
             trailing_dims = tuple(input.shape[n] for n in range(2, input.ndim))
             input = T.reshape(input, (seq_len*num_batch,) + trailing_dims)
-            input = helper.get_output(self.input_to_hidden, input, **kwargs)
+            input = helper.get_output(
+                self.input_to_hidden, input, **kwargs)
 
             # Reshape back to (seq_len, batch_size, trailing dimensions...)
             trailing_dims = tuple(input.shape[n] for n in range(1, input.ndim))
@@ -241,9 +220,10 @@ class CustomRecurrentLayerWithFastWeights(MergeLayer):
             non_seqs += helper.get_all_params(self.input_to_hidden)
 
         # Create single recurrent computation step function
-        def step(input_n, hid_prevprev, hid_previous, *args):
+        def step(input_n, hid_previous, *args):
             # Compute the hidden-to-hidden activation
-            hid_pre = helper.get_output(self.hidden_to_hidden, hid_previous, **kwargs)
+            hid_pre = helper.get_output(
+                self.hidden_to_hidden, hid_previous, **kwargs)
 
             # If the dot product is precomputed then add it, otherwise
             # calculate the input_to_hidden values and add them
@@ -255,13 +235,10 @@ class CustomRecurrentLayerWithFastWeights(MergeLayer):
 
             # Clip gradients
             if self.grad_clipping:
-                hid_pre = theano.gradient.grad_clip(hid_pre, -self.grad_clipping, self.grad_clipping)
+                hid_pre = theano.gradient.grad_clip(
+                    hid_pre, -self.grad_clipping, self.grad_clipping)
 
-            hid_pre += self.gamma * hid_prevprev * T.clip(T.tile(T.reshape(T.diagonal(T.dot(hid_prevprev, hid_previous.T)),
-                                                      (1,hid_previous.shape[0])), (hid_previous.shape[1],1)).T, 0.0, 100.0)
-
-            return self.nonlinearity( hid_pre )
-
+            return self.leak_inp * self.nonlinearity(hid_pre) + self.leak_hid * hid_previous
 
         def step_masked(input_n, mask_n, hid_previous, *args):
             # Skip over any input with mask 0 by copying the previous
@@ -294,7 +271,7 @@ class CustomRecurrentLayerWithFastWeights(MergeLayer):
             hid_out = unroll_scan(
                 fn=step_fun,
                 sequences=sequences,
-                outputs_info=[dict(initial=T.zeros((2,num_batch,500)),taps=[-2,-1])],
+                outputs_info=[hid_init],
                 go_backwards=self.backwards,
                 non_sequences=non_seqs,
                 n_steps=input_shape[1])[0]
@@ -305,7 +282,7 @@ class CustomRecurrentLayerWithFastWeights(MergeLayer):
                 fn=step_fun,
                 sequences=sequences,
                 go_backwards=self.backwards,
-                outputs_info=[dict(initial=T.zeros((2,num_batch,500)),taps=[-2,-1])],
+                outputs_info=[hid_init],
                 non_sequences=non_seqs,
                 truncate_gradient=self.gradient_steps,
                 strict=True)[0]
@@ -322,4 +299,4 @@ class CustomRecurrentLayerWithFastWeights(MergeLayer):
             if self.backwards:
                 hid_out = hid_out[:, ::-1]
 
-        return hid_out    
+        return hid_out

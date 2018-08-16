@@ -10,7 +10,7 @@ import lasagne.nonlinearities
 import lasagne.updates
 import lasagne.objectives
 import lasagne.init
-import generators, models
+import generators_lb, models
 
 def build_generators(ExptDict):
     # Unpack common variables
@@ -27,11 +27,10 @@ def build_generators(ExptDict):
     kappa         = ExptDict["kappa"]
     spon_rate     = ExptDict["spon_rate"]
     tr_max_iter   = ExptDict["tr_max_iter"]
-    test_max_iter = ExptDict["test_max_iter"] 
-    
+    test_max_iter = ExptDict["test_max_iter"]   
     
     if task == 'DE1':
-        generator = generators.DelayedEstimationTask(max_iter=tr_max_iter, 
+        generator = generators_lb.DelayedEstimationTask(max_iter=tr_max_iter, 
                                                      batch_size=batch_size, 
                                                      n_loc=n_loc, n_in=n_in, 
                                                      n_out=n_out, stim_dur=stim_dur, 
@@ -40,7 +39,7 @@ def build_generators(ExptDict):
                                                      spon_rate=spon_rate, 
                                                      tr_cond=tr_cond)   
                                                 
-        test_generator = generators.DelayedEstimationTask(max_iter=test_max_iter, 
+        test_generator = generators_lb.DelayedEstimationTask(max_iter=test_max_iter, 
                                                           batch_size=batch_size, 
                                                           n_loc=n_loc, n_in=n_in, 
                                                           n_out=n_out, 
@@ -50,8 +49,56 @@ def build_generators(ExptDict):
                                                           kappa=kappa, 
                                                           spon_rate=spon_rate, 
                                                           tr_cond=test_cond)
+    elif task == 'Julia2015v1':
+        sigtc     = ExptDict["task"]["sigtc"]
+        stim_rate = ExptDict["task"]["stim_rate"]
+        generator = generators_lb.Julia2015(max_iter=tr_max_iter, batch_size=batch_size, 
+                                          n_in=n_in, n_out=n_out, stim_dur=stim_dur, 
+                                          delay_dur=delay_dur, resp_dur=resp_dur, B_stim_dur=10, B_val = 1,
+                                          sigtc=sigtc, stim_rate=stim_rate, spon_rate=spon_rate)
+        
+        test_generator = generators_lb.Julia2015(max_iter=test_max_iter, batch_size=batch_size,
+                                          n_in=n_in, n_out=n_out, stim_dur=stim_dur, 
+                                          delay_dur=delay_dur, resp_dur=resp_dur, B_stim_dur=10, B_val = 1,
+                                          sigtc=sigtc, stim_rate=stim_rate, spon_rate=spon_rate)
+        
+        generator2 = generators_lb.Julia2015(max_iter=tr_max_iter, batch_size=batch_size, 
+                                          n_in=n_in, n_out=n_out, stim_dur=stim_dur, 
+                                          delay_dur=delay_dur, resp_dur=resp_dur, B_stim_dur=10, B_val = 2,
+                                          sigtc=sigtc, stim_rate=stim_rate, spon_rate=spon_rate)
+        
+        test_generator2 = generators_lb.Julia2015(max_iter=test_max_iter, batch_size=batch_size,
+                                          n_in=n_in, n_out=n_out, stim_dur=stim_dur, 
+                                          delay_dur=delay_dur, resp_dur=resp_dur, B_stim_dur=10, B_val = 2,
+                                          sigtc=sigtc, stim_rate=stim_rate, spon_rate=spon_rate)
+        return generator, test_generator, generator2, test_generator2
+    
+    elif task == 'Julia2015v2':
+        sigtc     = ExptDict["task"]["sigtc"]
+        stim_rate = ExptDict["task"]["stim_rate"]
+        generator = generators_lb.Julia2015(max_iter=tr_max_iter, batch_size=batch_size, 
+                                          n_in=n_in, n_out=n_out, stim_dur=stim_dur, 
+                                          delay_dur=delay_dur, resp_dur=resp_dur, B_stim_dur=10, B_val = 1,
+                                          sigtc=sigtc, stim_rate=stim_rate, spon_rate=spon_rate)
+        
+        test_generator = generators_lb.Julia2015(max_iter=test_max_iter, batch_size=batch_size,
+                                          n_in=n_in, n_out=n_out, stim_dur=stim_dur, 
+                                          delay_dur=delay_dur, resp_dur=resp_dur, B_stim_dur=10, B_val = 1,
+                                          sigtc=sigtc, stim_rate=stim_rate, spon_rate=spon_rate)
+        
+        generator2 = generators_lb.Julia2015(max_iter=tr_max_iter, batch_size=batch_size, 
+                                          n_in=n_in, n_out=n_out, stim_dur=stim_dur, 
+                                          delay_dur=delay_dur, resp_dur=resp_dur, B_stim_dur=5, B_val = 2,
+                                          sigtc=sigtc, stim_rate=stim_rate, spon_rate=spon_rate)
+        
+        test_generator2 = generators_lb.Julia2015(max_iter=test_max_iter, batch_size=batch_size,
+                                          n_in=n_in, n_out=n_out, stim_dur=stim_dur, 
+                                          delay_dur=delay_dur, resp_dur=resp_dur, B_stim_dur=5, B_val = 2,
+                                          sigtc=sigtc, stim_rate=stim_rate, spon_rate=spon_rate)
+        return generator, test_generator, generator2, test_generator2
+    
     elif task == 'DE2':
-        generator = generators.DelayedEstimationTask(max_iter=tr_max_iter, 
+        generator = generators_lb.DelayedEstimationTask(max_iter=tr_max_iter, 
                                                      batch_size=batch_size, 
                                                      n_loc=n_loc, n_in=n_in, 
                                                      n_out=n_out, stim_dur=stim_dur, 
@@ -60,7 +107,7 @@ def build_generators(ExptDict):
                                                      spon_rate=spon_rate, 
                                                      tr_cond=tr_cond)    
                                                
-        test_generator = generators.DelayedEstimationTask(max_iter=test_max_iter, 
+        test_generator = generators_lb.DelayedEstimationTask(max_iter=test_max_iter, 
                                                           batch_size=batch_size, 
                                                           n_loc=n_loc, n_in=n_in, 
                                                           n_out=n_out, 
@@ -71,7 +118,7 @@ def build_generators(ExptDict):
                                                           spon_rate=spon_rate, 
                                                           tr_cond=test_cond)
     elif task == 'CD1':
-        generator = generators.ChangeDetectionTask(max_iter=tr_max_iter, 
+        generator = generators_lb.ChangeDetectionTask(max_iter=tr_max_iter, 
                                                    batch_size=batch_size, 
                                                    n_loc=n_loc, n_in=n_in, 
                                                    n_out=n_out, stim_dur=stim_dur, 
@@ -80,7 +127,7 @@ def build_generators(ExptDict):
                                                    spon_rate=spon_rate, 
                                                    tr_cond=tr_cond)
         
-        test_generator = generators.ChangeDetectionTask(max_iter=test_max_iter, 
+        test_generator = generators_lb.ChangeDetectionTask(max_iter=test_max_iter, 
                                                         batch_size=batch_size, 
                                                         n_loc=n_loc, n_in=n_in, 
                                                         n_out=n_out, 
@@ -91,7 +138,7 @@ def build_generators(ExptDict):
                                                         spon_rate=spon_rate, 
                                                         tr_cond=test_cond)
     elif task == 'COMP':
-        generator = generators.ComparisonTask(max_iter=tr_max_iter,
+        generator = generators_lb.ComparisonTask(max_iter=tr_max_iter,
                                                    batch_size=batch_size,
                                                    n_loc=n_loc, n_in=n_in,
                                                    n_out=n_out, stim_dur=stim_dur,
@@ -100,7 +147,7 @@ def build_generators(ExptDict):
                                                    spon_rate=spon_rate,
                                                    tr_cond=tr_cond)
 
-        test_generator = generators.ComparisonTask(max_iter=test_max_iter,
+        test_generator = generators_lb.ComparisonTask(max_iter=test_max_iter,
                                                         batch_size=batch_size,
                                                         n_loc=n_loc, n_in=n_in,
                                                         n_out=n_out,
@@ -111,7 +158,7 @@ def build_generators(ExptDict):
                                                         spon_rate=spon_rate,
                                                         tr_cond=test_cond)
     elif task == 'CD2':
-        generator = generators.ChangeDetectionTask(max_iter=tr_max_iter, 
+        generator = generators_lb.ChangeDetectionTask(max_iter=tr_max_iter, 
                                                    batch_size=batch_size, 
                                                    n_loc=n_loc, n_in=n_in, 
                                                    n_out=n_out, stim_dur=stim_dur, 
@@ -120,7 +167,7 @@ def build_generators(ExptDict):
                                                    spon_rate=spon_rate, 
                                                    tr_cond=tr_cond)
         
-        test_generator = generators.ChangeDetectionTask(max_iter=test_max_iter, 
+        test_generator = generators_lb.ChangeDetectionTask(max_iter=test_max_iter, 
                                                         batch_size=batch_size, 
                                                         n_loc=n_loc, n_in=n_in, 
                                                         n_out=n_out, 
@@ -131,7 +178,7 @@ def build_generators(ExptDict):
                                                         spon_rate=spon_rate, 
                                                         tr_cond=test_cond)
     elif task == 'GDE2':
-        generator = generators.GatedDelayedEstimationTask(max_iter=tr_max_iter, 
+        generator = generators_lb.GatedDelayedEstimationTask(max_iter=tr_max_iter, 
                                                           batch_size=batch_size, 
                                                           n_loc=n_loc, n_in=n_in, 
                                                           n_out=n_out, 
@@ -142,7 +189,7 @@ def build_generators(ExptDict):
                                                           spon_rate=spon_rate, 
                                                           tr_cond=tr_cond)
         
-        test_generator = generators.GatedDelayedEstimationTask(max_iter=test_max_iter,
+        test_generator = generators_lb.GatedDelayedEstimationTask(max_iter=test_max_iter,
                                                                batch_size=batch_size, 
                                                                n_loc=n_loc, n_in=n_in,
                                                                n_out=n_out, 
@@ -154,7 +201,7 @@ def build_generators(ExptDict):
                                                                tr_cond=test_cond)
     elif task == 'VDE1':
         max_delay = ExptDict["task"]["max_delay"]
-        generator = generators.VarDelayedEstimationTask(max_iter=tr_max_iter, 
+        generator = generators_lb.VarDelayedEstimationTask(max_iter=tr_max_iter, 
                                                         batch_size=batch_size, 
                                                         n_loc=n_loc, n_in=n_in, 
                                                         n_out=n_out, stim_dur=stim_dur, 
@@ -164,7 +211,7 @@ def build_generators(ExptDict):
                                                         spon_rate=spon_rate, 
                                                         tr_cond=tr_cond)
         
-        test_generator = generators.VarDelayedEstimationTask(max_iter=test_max_iter, 
+        test_generator = generators_lb.VarDelayedEstimationTask(max_iter=test_max_iter, 
                                                              batch_size=batch_size, 
                                                              n_loc=n_loc, n_in=n_in, 
                                                              n_out=n_out, 
@@ -177,12 +224,12 @@ def build_generators(ExptDict):
     elif task == 'Harvey2012':
         sigtc     = ExptDict["task"]["sigtc"]
         stim_rate = ExptDict["task"]["stim_rate"]
-        generator = generators.Harvey2012(max_iter=tr_max_iter, batch_size=batch_size, 
+        generator = generators_lb.Harvey2012(max_iter=tr_max_iter, batch_size=batch_size, 
                                           n_in=n_in, n_out=n_out, stim_dur=stim_dur, 
                                           delay_dur=delay_dur, resp_dur=resp_dur, 
                                           sigtc=sigtc, stim_rate=stim_rate, spon_rate=spon_rate)
         
-        test_generator = generators.Harvey2012(max_iter=test_max_iter, batch_size=batch_size,
+        test_generator = generators_lb.Harvey2012(max_iter=test_max_iter, batch_size=batch_size,
                                           n_in=n_in, n_out=n_out, stim_dur=stim_dur, 
                                           delay_dur=delay_dur, resp_dur=resp_dur, 
                                           sigtc=sigtc, stim_rate=stim_rate, spon_rate=spon_rate)
@@ -190,12 +237,12 @@ def build_generators(ExptDict):
     elif task == 'Harvey2012Dynamic':
         sigtc     = ExptDict["task"]["sigtc"]
         stim_rate = ExptDict["task"]["stim_rate"]
-        generator = generators.Harvey2012Dynamic(max_iter=tr_max_iter, batch_size=batch_size, 
+        generator = generators_lb.Harvey2012Dynamic(max_iter=tr_max_iter, batch_size=batch_size, 
                                           n_in=n_in, n_out=n_out, stim_dur=stim_dur, 
                                           delay_dur=delay_dur, resp_dur=resp_dur, 
                                           sigtc=sigtc, stim_rate=stim_rate, spon_rate=spon_rate)
         
-        test_generator = generators.Harvey2012Dynamic(max_iter=test_max_iter, batch_size=batch_size,
+        test_generator = generators_lb.Harvey2012Dynamic(max_iter=test_max_iter, batch_size=batch_size,
                                           n_in=n_in, n_out=n_out, stim_dur=stim_dur, 
                                           delay_dur=delay_dur, resp_dur=resp_dur, 
                                           sigtc=sigtc, stim_rate=stim_rate, spon_rate=spon_rate)
@@ -205,23 +252,23 @@ def build_generators(ExptDict):
         stim_rate = ExptDict["task"]["stim_rate"]
         epoch_dur = ExptDict["task"]["epoch_dur"]
         n_epochs  = ExptDict["task"]["n_epochs"]
-        generator = generators.Harvey2016(max_iter=tr_max_iter, batch_size=batch_size, 
+        generator = generators_lb.Harvey2016(max_iter=tr_max_iter, batch_size=batch_size, 
                                           n_in=n_in, n_out=n_out, n_epochs=n_epochs, 
                                           epoch_dur=epoch_dur, sigtc=sigtc, 
                                           stim_rate=stim_rate, spon_rate=spon_rate)
         
-        test_generator = generators.Harvey2016(max_iter=test_max_iter, batch_size=batch_size,
+        test_generator = generators_lb.Harvey2016(max_iter=test_max_iter, batch_size=batch_size,
                                           n_in=n_in, n_out=n_out, n_epochs=n_epochs, 
                                           epoch_dur=epoch_dur, sigtc=sigtc, 
                                           stim_rate=stim_rate, spon_rate=spon_rate)
 
     elif task == 'SINE':
         alpha     = ExptDict["task"]["alpha"]
-        generator = generators.SineTask(max_iter=tr_max_iter, batch_size=batch_size, 
+        generator = generators_lb.SineTask(max_iter=tr_max_iter, batch_size=batch_size, 
                                           n_in=n_in, n_out=n_out, stim_dur=stim_dur,
                                           delay_dur=delay_dur, resp_dur=resp_dur, alpha=alpha)
         
-        test_generator = generators.SineTask(max_iter=test_max_iter, batch_size=batch_size, 
+        test_generator = generators_lb.SineTask(max_iter=test_max_iter, batch_size=batch_size, 
                                           n_in=n_in, n_out=n_out, stim_dur=stim_dur,
                                           delay_dur=delay_dur, resp_dur=resp_dur, alpha=alpha)
         
@@ -294,8 +341,8 @@ def build_loss(pred_var,target_var,ExptDict):
         loss = T.mean(T.mod(T.abs_(pred_var[:,-resp_dur:,:] - target_var[:,-resp_dur:,:]), np.pi))
     elif task in ['CD1','CD2','Harvey2012','Harvey2012Dynamic','Harvey2016','COMP']:
         loss = T.mean(lasagne.objectives.binary_crossentropy(pred_var[:,-resp_dur:,-1], target_var[:,-resp_dur:,-1])) 
-    elif task in ['SINE']:
-        loss = T.mean(T.abs_(pred_var[:,-resp_dur:,:] - target_var[:,-resp_dur:,:]))
+    elif task in ['SINE','Julia2015v1','Julia2015v2']:
+        loss = T.mean(T.abs_(pred_var[:,:,:] - target_var[:,:,:]))
 
     return loss
 
@@ -309,6 +356,6 @@ def build_performance(s_vec,opt_vec,net_vec,ExptDict):
         infloss  = (rmse_net - rmse_opt) / rmse_opt
     elif task in ['CD1','CD2','Harvey2012','Harvey2012Dynamic','Harvey2016','COMP']:
         infloss = np.nanmean( opt_vec * np.log(opt_vec/net_vec) + (1.0 - opt_vec) * np.log((1.0 - opt_vec)/(1.0 - net_vec)) ) / np.nanmean( opt_vec * np.log(2.0*opt_vec) + (1.0-opt_vec) * np.log(2.0*(1.0-opt_vec)) ) 
-    elif task in ['SINE']:
+    elif task in ['SINE','Julia2015v1','Julia2015v2']:
         infloss = np.mean(np.abs(np.squeeze(opt_vec) - np.squeeze(net_vec)))
     return infloss

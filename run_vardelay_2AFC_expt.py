@@ -31,12 +31,12 @@ if __name__ == "__main__":
     model      = model_list[0]
     n_hid      = 500         # number of hidden units
 
-    generator  = generators.VarHarvey2012(max_iter=25001, batch_size=50,
+    generator  = generators.VarHarvey2012(max_iter=250, batch_size=50,
                                                          n_in=50, n_out=1,
                                                          stim_dur=25, max_delay=100,
                                                          resp_dur=25, sigtc=15.0,
                                                          stim_rate=1.0, spon_rate=0.1)
-    test_generator = generators.VarHarvey2012(max_iter=2501, batch_size=50,
+    test_generator = generators.VarHarvey2012(max_iter=50, batch_size=50,
                                                          n_in=50, n_out=1,
                                                          stim_dur=25, max_delay=100,
                                                          resp_dur=25, sigtc=15.0,
@@ -81,12 +81,12 @@ if __name__ == "__main__":
         s_vec.append(s)
         opt_vec.append(opt_s)
         net_vec.append(np.squeeze(example_prediction[:,-5,:]))
-        if i % 500 == 0:
+        if i % 10 == 0:
             opt_vec = np.asarray(opt_vec)
             net_vec = np.asarray(net_vec)
             infloss = np.nanmean(opt_vec * np.log(opt_vec/net_vec) + (1.0 - opt_vec) * np.log((1.0 - opt_vec)/(1.0 - net_vec)) ) / np.nanmean( opt_vec * np.log(2.0*opt_vec) + (1.0-opt_vec) * np.log(2.0*(1.0-opt_vec)) )
             frac_rmse_vec.append(infloss)
-            print 'Batch #%d; Inf. loss: %.6f' % (i, infloss)
+            print ('Batch #{}; Inf. loss: {:f}'.format(i, infloss))
             s_vec   = []
             opt_vec = []
             net_vec = []
@@ -99,7 +99,7 @@ if __name__ == "__main__":
         s_vec.append(s)
         opt_vec.append(opt_s)
         net_vec.append(np.squeeze(example_prediction[:,-5,:]))
-        if i % 500 == 0:
+        if i % 10 == 0:
             ex_hid_vec.append(example_hidden)
             ex_inp_vec.append(example_input)
             delay_vec.append(delay_durs)
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     opt_vec = np.asarray(opt_vec)
     net_vec = np.asarray(net_vec)
     infloss_test = np.nanmean(opt_vec * np.log(opt_vec/net_vec) + (1.0 - opt_vec) * np.log((1.0 - opt_vec)/(1.0 - net_vec)) ) / np.nanmean( opt_vec * np.log(2.0*opt_vec) + (1.0-opt_vec) * np.log(2.0*(1.0-opt_vec)) )
-    print 'Test data; Inf. loss: %.6f' % (infloss_test)
+    print ('Test data; Inf. loss: {:f}'.format(infloss_test))
 
     ex_hid_vec = np.asarray(ex_hid_vec)
     ex_hid_vec = np.reshape(ex_hid_vec,(-1, test_generator.stim_dur + test_generator.max_delay + test_generator.resp_dur, n_hid))
